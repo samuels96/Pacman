@@ -1,22 +1,43 @@
 package tddMan.Block;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+
+import tddMan.Graphics.GameGraphics;;
 
 public class TeleportBlockObj implements BlockInteractiveInterface {
-	private BufferedImage img;
+	private BlockGraphicsStrategy Graphics;
 	private TeleportBlockObj teleportTarget;
 	private Integer xPos, yPos;
 		
 	TeleportBlockObj(Integer xPos, Integer yPos){
 		this.xPos = xPos;
 		this.yPos = yPos;
+
+		Graphics = new BlockGraphicsStrategy(){
+			protected BufferedImage img;
+
+			@Override
+			public BufferedImage DetermineAndReturnImg() {
+				return img;
+			}
+
+			@Override
+			public void SetImg(Object imgSource){
+				try{
+					img = img.getClass().cast(imgSource);
+				}
+				catch(Exception e){}
+			}
+		};
+
 	}
 
-	public BufferedImage GetImg(){
-		return img;
+	public BufferedImage GraphicsGetImg(){
+		return Graphics.DetermineAndReturnImg();
 	}
 
-	public void SetImg(BufferedImage img){
-		this.img = img;
+	public void GraphicsSetImg(Object imgSource){
+		Graphics.SetImg(imgSource);
 	}
 
 	public Integer GetXPos() {

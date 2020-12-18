@@ -1,24 +1,85 @@
 package tddMan.Character;
 
 import java.util.ArrayList;
-import java.util.Stack;
+import java.util.Iterator;
 
 import tddMan.Game;
+import java.awt.image.BufferedImage;
+
+import tddMan.Block.BlockGraphicsResources;
+import tddMan.Block.BlockGraphicsStrategy;
 import tddMan.Movement.Direction;
 
 public class GhostCharacter extends GameCharacter {
 	private GhostType type;
 	private Integer spawnXPos, spawnYPos;
 	private GhostBehaviorStrategy ghostBehavior;
-	private Direction currDir;
 	private Boolean outOfSpawnArea;
 	private Boolean isRespawning;
 	private Integer respawnDuration;
 	private ArrayList<GhostCharacter> overlayedGhosts = new ArrayList<GhostCharacter>();
 	public GhostCharacter OverlayingGhost;
 
-	public Boolean HasOverlayGhosts(){
-		return this.getOverlayGhosts().size() > 0;
+
+	GhostCharacter(GhostType type, Integer xPos, Integer yPos){
+		super(xPos, yPos);
+
+		this.type = type;
+		spawnXPos = xPos;
+		spawnYPos = yPos;
+
+		ghostBehavior = new NormalGhostBehavior();
+		currDir = Direction.NONE;
+		outOfSpawnArea = false;
+		isRespawning = false;
+		OverlayingGhost = null;
+
+		Graphics = new BlockGraphicsStrategy(){
+			private Integer animationFrame = 0;
+
+			@Override
+			public BufferedImage DetermineAndReturnImg() {
+				if(animationFrame >= 1)
+					animationFrame = 0;
+
+				if(ghostBehavior.getClass() == FleeingGhostBehavior.class && outOfSpawnArea){
+					return BlockGraphicsResources.imgArr_ghostFlashing.get(animationFrame++);
+				}
+				else
+					return BlockGraphicsResources.imgDict_ghost.get(GetGhostType()).get(currDir).get(animationFrame++);
+			}
+
+			@Override
+			public void SetImg(Object imgSource){
+				try{
+				}
+				catch(Exception e){}
+			}
+		};
+	}
+
+	public Iterator<GhostCharacter> GetOverlayedGhostIterator(){
+		return new GhostIterator();
+	}
+
+	private class GhostIterator implements Iterator<GhostCharacter> {
+		int index = 0;
+
+		@Override
+		public boolean hasNext() {
+			if(index < GetOverlayGhostsStack().size()) 
+				return true;
+			return false;
+		}
+
+		@Override
+		public GhostCharacter next() {
+			if(this.hasNext())
+				return GetOverlayGhostsStack().get(index++);
+			return null;
+		}
+
+
 	}
 
 	private GhostCharacter getHeadOverlayGhost(){
@@ -130,27 +191,25 @@ public class GhostCharacter extends GameCharacter {
 		return isRespawning;
 	}
 
-	public void ActivateRespawn(){
+	public void InstantRespawn(){
+		currDir = Direction.NONE;
+
 		this.xPos = spawnXPos;
 		this.yPos = spawnYPos;
 
 		outOfSpawnArea = false;
-		isRespawning = true;
-		respawnDuration = 25;
+		isRespawning = false;
 	}
 
-	GhostCharacter(GhostType type, Integer xPos, Integer yPos){
-		super(xPos, yPos);
+	public void ActivateRespawn(){
+		this.xPos = spawnXPos;
+		this.yPos = spawnYPos;
 
-		this.type = type;
-		spawnXPos = xPos;
-		spawnYPos = yPos;
-
-		ghostBehavior = new NormalGhostBehavior();
 		currDir = Direction.NONE;
+
 		outOfSpawnArea = false;
-		isRespawning = false;
-		OverlayingGhost = null;
+		isRespawning = true;
+		respawnDuration = 25;
 	}
 
 	public GhostType GetGhostType(){
@@ -182,8 +241,6 @@ public class GhostCharacter extends GameCharacter {
 		currDir = ghostBehavior.DetermineNextDirection(game, this);
 	}
 
-	public Direction GetCurrentDirection(){
-		return currDir;
-	}
+
 }
 

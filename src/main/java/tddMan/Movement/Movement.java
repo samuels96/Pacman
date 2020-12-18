@@ -1,6 +1,7 @@
 package tddMan.Movement;
 
 import java.util.ArrayList;
+import java.util.jar.Attributes.Name;
 
 import tddMan.Course;
 import tddMan.Game;
@@ -35,7 +36,6 @@ public class Movement {
 		if(character.getClass().equals(PlayerCharacter.class))
 		{
 			PlayerCharacter playerCharacter = ((PlayerCharacter)character);
-
 			playerCharacter.DecreaseSuperPowerDuration();
 
 			if
@@ -67,20 +67,23 @@ public class Movement {
 						teleport(character, (TeleportBlockObj)attemptBlockObj);
 						break;
 					case PLAYER_GHOST_COLLISION:
-						if(playerCharacter.HasSuperPower()){
-							GhostCharacter ghost = (GhostCharacter)attemptBlockObj;
+						GhostCharacter ghost = (GhostCharacter)attemptBlockObj;
 
-							if(ghost.GetOverlayedBlockObject() != null){
-								course.PlaceObjectOnCourseBlock(ghost.GetOverlayedBlockObject());
-							}
+						if(playerCharacter.HasSuperPower()){
 							ghost.ActivateRespawn();
-							Status st = Status.FRUIT_COLLISION;
+							Status st = Status.PLAYER_GHOST_COLLISION;
+
+							character.SetXPos(oldXPos);
+							character.SetYPos(oldYPos);
+							course.PlaceObjectOnCourseBlock(character);
+
 							while(st == Status.PLAYER_GHOST_COLLISION){
 								st = turnHelper(course, character, oldXPos, oldYPos, attemptXPos, attemptYPos);
+								System.out.println(st);
 							}
-
 							return Status.PLAYER_EAT_GHOST;
 						}
+						playerCharacter.DecreaseLives();
 						return Status.GHOST_EAT_PLAYER;
 				}
 			}
@@ -103,7 +106,9 @@ public class Movement {
 				if(overlayedObj!= null) {
 					course.ForcePlaceObjectOnCourseBlock(overlayedObj);
 				}
-				character.SetOverlayedBlockObject(attemptBlockObj);
+
+				if(attemptBlockObj.getClass().equals(PlayerCharacter.class) == false)
+					character.SetOverlayedBlockObject(attemptBlockObj);
 
 				for(GhostCharacter gh : ghostCharacter.GetOverlayGhostsExcludingThisIncludingOverlaying())
 				{
@@ -126,11 +131,21 @@ public class Movement {
 
 				    case PLAYER_GHOST_COLLISION:
 						if(status == BlockInteractionStatus.Status.PLAYER_GHOST_COLLISION){
+
 							if(attemptBlockObj.getClass().equals(PlayerCharacter.class)){
-								if(((PlayerCharacter)attemptBlockObj).HasSuperPower()){
+								PlayerCharacter playerCharacter = (PlayerCharacter)attemptBlockObj;
+								if(playerCharacter.HasSuperPower()){
 									ghostCharacter.ActivateRespawn();
+									Status st = Status.PLAYER_GHOST_COLLISION;
+									while(st == Status.PLAYER_GHOST_COLLISION){
+										st = turnHelper(course, character, oldXPos, oldYPos, attemptXPos, attemptYPos);
+									}
 									return Status.PLAYER_EAT_GHOST;
 								}
+								BlockInteractiveInterface freeBlock = BlockFactory.CreateFreeBlockObjAtPos(attemptXPos, attemptYPos);
+								course.ForcePlaceObjectOnCourseBlock(freeBlock);
+
+								playerCharacter.DecreaseLives();
 							}
 							return Status.GHOST_EAT_PLAYER;
 						}

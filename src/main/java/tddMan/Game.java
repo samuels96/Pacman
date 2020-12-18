@@ -56,10 +56,6 @@ public class Game {
 			playerDirection = dir;
 	}
 
-	public static void OnCollisionWithGhost() {
-		stop = true;
-	}
-
 	public static void Reset() {
 		playerDirection = Direction.NONE;
 		stop = false;
@@ -68,7 +64,6 @@ public class Game {
 
 	public void LaunchGraphics() {
 		gameLoopThread.start();
-		final Game thisGame = this;
 
 		EventQueue.invokeLater(new Runnable() {
 
@@ -89,10 +84,6 @@ public class Game {
 
 		public void run() {
 
-			Status status = null;
-			Status ghostStatus = null;
-			Direction currDir = Direction.NONE;
-
 			NormalGhostBehavior normalGhostBehavior = new NormalGhostBehavior();
 			FleeingGhostBehavior fleeingGhostBehavior = new FleeingGhostBehavior();
 			RespawnGhostBehavior respawnGhostBehavior = new RespawnGhostBehavior();
@@ -103,78 +94,75 @@ public class Game {
 			GhostCharacter Pinky = CharacterFactory.CreateGhost(GhostType.Pinky, 15, 10);
 
 			/*
-			Movement.TurnRight(course, Blinky);
-			Movement.TurnUp(course, Blinky);
-			Movement.TurnUp(course, Inky);
-			Movement.TurnLeft(course, Clyde);
-			Movement.TurnLeft(course, Clyde);
-			Movement.TurnUp(course, Clyde);
-			Movement.TurnUp(course, Clyde);
-			Movement.TurnUp(course, Blinky);
-			Movement.TurnUp(course, Inky);
-			Movement.TurnRight(course, Clyde);
-			Movement.TurnRight(course, Clyde);
-			Movement.TurnRight(course, Inky);
-			Movement.TurnRight(course, Blinky);
-			Movement.TurnRight(course, Blinky);
+			 * Movement.TurnRight(course, Blinky); Movement.TurnUp(course, Blinky);
+			 * Movement.TurnUp(course, Inky); Movement.TurnLeft(course, Clyde);
+			 * Movement.TurnLeft(course, Clyde); Movement.TurnUp(course, Clyde);
+			 * Movement.TurnUp(course, Clyde); Movement.TurnUp(course, Blinky);
+			 * Movement.TurnUp(course, Inky); Movement.TurnRight(course, Clyde);
+			 * Movement.TurnRight(course, Clyde); Movement.TurnRight(course, Inky);
+			 * Movement.TurnRight(course, Blinky); Movement.TurnRight(course, Blinky);
+			 * 
+			 * try { Thread.sleep(1000); } catch (InterruptedException e1) { // TODO
+			 * Auto-generated catch block e1.printStackTrace(); } graphics.repaint(); try {
+			 * Thread.sleep(1000000000); } catch (InterruptedException e1) { // TODO
+			 * Auto-generated catch block e1.printStackTrace(); }
+			 */
 
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			graphics.repaint();
-			try {
-				Thread.sleep(1000000000);
-			} catch (InterruptedException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			*/
+			GhostCharacter[] ghosts = { Blinky, Inky, Clyde, Pinky };
+			// GhostCharacter[] ghosts = {Blinky};
 
-			GhostCharacter[] ghosts = {Blinky, Inky, Clyde, Pinky};
-			//GhostCharacter[] ghosts = {Blinky};
-			
-			//course.PlaceObjectOnCourseBlock(player);
+			// course.PlaceObjectOnCourseBlock(player);
 
-			new Timer().scheduleAtFixedRate(new TimerTask()
-			{
-				public void run()
-				{
-					if(CherryFruit.Spawnable)
-						while(course.PlaceObjectOnCourseBlock(FruitFactory.CreateCherry((int)((Math.random()*100) % 27), 
-																			(int)((Math.random()*100) % 22))) != Status.NO_COLLISION){}
+			new Timer().scheduleAtFixedRate(new TimerTask() {
+				public void run() {
+					if (CherryFruit.Spawnable)
+						while (course
+								.PlaceObjectOnCourseBlock(FruitFactory.CreateCherry((int) ((Math.random() * 100) % 27),
+										(int) ((Math.random() * 100) % 22))) != Status.NO_COLLISION) {
+						}
 
 				}
 			}, 3000, 3000);
 
-			while(stop != true) {
+			Movement.NoTurn(course, player);
+
+			while (player.HasLivesLeft()) {
+				if (player.ResetIfLiveLost() == true) {
+					for (GhostCharacter ghost : ghosts) {
+						ghost.InstantRespawn();
+						Movement.NoTurn(course, ghost);
+					}
+					try {
+						Thread.sleep(2000);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+
 				if(pause != true) {
 					try {
 						Thread.sleep(110);
 					} catch (InterruptedException e) {
 					}
 
+					player.SetCurrentDirection(playerDirection);;
+
 					switch (playerDirection) {
 						case LEFT:
-								status = Movement.TurnLeft(course, player);
+								Movement.TurnLeft(course, player);
 								break;
 						case RIGHT:
-								status = Movement.TurnRight(course, player);
+								Movement.TurnRight(course, player);
 								break;
 						case UP:
-								status = Movement.TurnUp(course, player);
+								Movement.TurnUp(course, player);
 								break;
 						case DOWN:
-								status = Movement.TurnDown(course, player);
+								Movement.TurnDown(course, player);
 								break;
 						default:
 							break;
-					}
-					if(status == Status.GHOST_EAT_PLAYER){
-						OnCollisionWithGhost();
-						break;
 					}
 					
 					for(GhostCharacter ghost : ghosts) {
@@ -192,25 +180,22 @@ public class Game {
 
 						switch (ghost.GetCurrentDirection()) {
 							case LEFT:
-									ghostStatus = Movement.TurnLeft(course, ghost);
+									Movement.TurnLeft(course, ghost);
 									break;
 							case RIGHT:
-									ghostStatus = Movement.TurnRight(course, ghost);
+									Movement.TurnRight(course, ghost);
 									break;
 							case UP:
-									ghostStatus = Movement.TurnUp(course, ghost);
+									Movement.TurnUp(course, ghost);
 									break;
 							case DOWN:
-									ghostStatus = Movement.TurnDown(course, ghost);
+									Movement.TurnDown(course, ghost);
 									break;
 							case NONE:
-									ghostStatus = Movement.NoTurn(course, ghost);
+									Movement.NoTurn(course, ghost);
 									break;
 							default:
 								break;
-						}
-						if(ghostStatus == Status.GHOST_EAT_PLAYER){
-							OnCollisionWithGhost();
 						}
 					}
 				}

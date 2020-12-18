@@ -85,7 +85,7 @@ public class BlockFactory {
 				return block;
 			default:
 				block = new SolidBlock(xPos, yPos);
-				block.BlockObject.SetImg(solidBlockImgMap.get(Character.valueOf(ch)));
+				block.BlockObject.GraphicsSetImg(solidBlockImgMap.get(Character.valueOf(ch)));
 				return block;
 		}
 	}
