@@ -3,6 +3,8 @@ package tddMan.Character;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import javax.lang.model.util.ElementScanner6;
+
 import tddMan.Game;
 import java.awt.image.BufferedImage;
 
@@ -19,6 +21,7 @@ public class GhostCharacter extends GameCharacter {
 	private Integer respawnDuration;
 	private ArrayList<GhostCharacter> overlayedGhosts = new ArrayList<GhostCharacter>();
 	public GhostCharacter OverlayingGhost;
+	private int flashingAnimationCounter;
 
 
 	GhostCharacter(GhostType type, Integer xPos, Integer yPos){
@@ -33,20 +36,44 @@ public class GhostCharacter extends GameCharacter {
 		outOfSpawnArea = false;
 		isRespawning = false;
 		OverlayingGhost = null;
+		respawnDuration = 0;
+		flashingAnimationCounter = 0;
 
 		Graphics = new BlockGraphicsStrategy(){
-			private Integer animationFrame = 0;
+			protected int animationFrame = 0;
 
 			@Override
 			public BufferedImage DetermineAndReturnImg() {
-				if(animationFrame >= 1)
+				animationFrame++;
+
+				if(animationFrame > 1)
 					animationFrame = 0;
 
 				if(ghostBehavior.getClass() == FleeingGhostBehavior.class && outOfSpawnArea){
-					return BlockGraphicsResources.imgArr_ghostFlashing.get(animationFrame++);
+					if(flashingAnimationCounter >= 80){
+						flashingAnimationCounter += 5;
+						if(animationFrame == 0)
+							animationFrame = 1;
+						else
+							animationFrame = 0;
+					}
+					else{
+						flashingAnimationCounter++;
+						animationFrame = 0;
+					}
+
+					if(flashingAnimationCounter >= 80 && (flashingAnimationCounter % 10) == 0){
+						if(animationFrame == 0)
+							animationFrame = 1;
+						else
+							animationFrame = 0;
+					}
+						return BlockGraphicsResources.imgArr_ghostFlashing.get(animationFrame);
 				}
-				else
-					return BlockGraphicsResources.imgDict_ghost.get(GetGhostType()).get(currDir).get(animationFrame++);
+				else{
+					flashingAnimationCounter = 0;
+					return BlockGraphicsResources.imgDict_ghost.get(GetGhostType()).get(currDir).get(animationFrame);
+				}
 			}
 
 			@Override
@@ -62,7 +89,7 @@ public class GhostCharacter extends GameCharacter {
 		return new GhostIterator();
 	}
 
-	private class GhostIterator implements Iterator<GhostCharacter> {
+	public class GhostIterator implements Iterator<GhostCharacter> {
 		int index = 0;
 
 		@Override
@@ -151,9 +178,7 @@ public class GhostCharacter extends GameCharacter {
 	}
 
 	public ArrayList<GhostCharacter> GetOverlayGhostsExcludingThisIncludingOverlaying(){
-		ArrayList<GhostCharacter> ghostArr = new ArrayList<GhostCharacter>();
-		ghostArr.addAll(getOverlayGhosts());
-		ghostArr.add(this.GetHeadOverlayGhost());
+		ArrayList<GhostCharacter> ghostArr = GetOverlayGhostsStack();
 		ghostArr.remove(this);
 		return ghostArr;
 	}

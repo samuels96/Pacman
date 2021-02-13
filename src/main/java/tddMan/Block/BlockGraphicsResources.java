@@ -22,7 +22,8 @@ public class BlockGraphicsResources {
     public static Hashtable<GhostType, Hashtable<Direction, ArrayList<BufferedImage>>> imgDict_ghost; 
 	public static ArrayList<BufferedImage> imgArr_ghostFlashing;
 	public static BufferedImage img_fruit;
-	public static BufferedImage img_superPower;
+    public static BufferedImage img_cherryFruit;
+    public static BufferedImage img_superPower;
     public static BufferedImage img_notImplemented;
 
     private static void ghostImageLoad(GhostType ghostType) throws IOException {
@@ -77,6 +78,7 @@ public class BlockGraphicsResources {
             imgArr_ghostFlashing.add(ImageIO.read(new File("graphicResources/ghosts/flash2.png")));
 
             img_fruit = ImageIO.read(new File("graphicResources/fruit.png"));
+            img_cherryFruit = ImageIO.read(new File("graphicResources/cherryFruit.png"));
             img_superPower = ImageIO.read(new File("graphicResources/superPower.png"));
             img_notImplemented = ImageIO.read(new File("graphicResources/ni.png"));
         } catch (IOException e) {

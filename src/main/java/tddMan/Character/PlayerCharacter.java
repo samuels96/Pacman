@@ -32,14 +32,22 @@ public class PlayerCharacter extends GameCharacter {
 		liveLostReset = false;
 
 		Graphics = new BlockGraphicsStrategy(){
-			protected int animationFrame;
+			protected int animationFrame = 0;
+			private int frameCounter = 0;
 
 			@Override
 			public BufferedImage DetermineAndReturnImg() {
-				if(animationFrame >= 2)
+				if(frameCounter >= 100)
+					frameCounter = 0;
+
+				if(frameCounter % 4 == 0)
+					animationFrame++;
+
+				if(animationFrame > 2)
 					animationFrame = 0;
 
-				return BlockGraphicsResources.imgDict_pac.get(currDir).get(animationFrame++);
+				frameCounter++;
+				return BlockGraphicsResources.imgDict_pac.get(currDir).get(animationFrame);
 			}
 
 			@Override
@@ -91,6 +99,10 @@ public class PlayerCharacter extends GameCharacter {
 	public void DecreaseLives(){
 		lives--;
 		liveLostReset = true;
+	}
+
+	public Integer GetLives(){
+		return lives;
 	}
 
 	public Boolean HasLivesLeft(){

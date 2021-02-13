@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Random;
 
 import tddMan.Game;
+import tddMan.Course.Course;
 import tddMan.Movement.Direction;
 import tddMan.Movement.Movement;
 

@@ -1,6 +1,8 @@
 package tddMan.Block;
 import java.awt.image.BufferedImage;
 
+import tddMan.Character.PlayerCharacter;
+
 public class Block {
 	public static enum BlockType { FREE, SOLID};
 	public BlockBehaviorStrategy BlockBehavior = null;
@@ -15,12 +17,16 @@ public class Block {
 	public BlockInteractionStatus.Status PlaceObject(BlockInteractiveInterface bObj) {
 
 		BlockInteractionStatus.Status status = BlockBehavior.OnCollision(BlockObject, bObj);
-		
+
 		if(status != BlockInteractionStatus.Status.ILLEGAL_INTERACTION &&
-		   status != BlockInteractionStatus.Status.SOLID_COLLISION)
+		   status != BlockInteractionStatus.Status.SOLID_COLLISION &&
+		   status != BlockInteractionStatus.Status.GHOST_EAT_PLAYER &&
+		   status != BlockInteractionStatus.Status.PLAYER_EAT_GHOST 
+		   )
 		{
 			BlockObject = bObj;
 		}
+
 		return status;
 		
 	}

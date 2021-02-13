@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.w3c.dom.events.Event;
+
 import tddMan.Block.BlockFactory;
 import tddMan.Block.BlockInteractionStatus;
 import tddMan.Block.BlockInteractiveInterface;
@@ -20,10 +22,14 @@ import tddMan.Fruit.CherryFruit;
 import tddMan.Fruit.Fruit;
 import tddMan.Fruit.FruitFactory;
 import tddMan.Graphics.GameGraphics;
+import tddMan.Course.Course;
 import tddMan.Movement.Direction;
 import tddMan.Movement.Movement;
+import tddMan.SuperPower.SuperPower;
 
 public class Game {
+	public final static Game instance = new Game();
+
 	private Course course;
 	private PlayerCharacter player;
 	Integer highscore;
@@ -33,6 +39,12 @@ public class Game {
 
 	public volatile static Boolean stop = false;
 	public volatile static Boolean pause = false;
+
+	private Timer graphicsRepaintTimer = new Timer();
+	private Timer playerMoveTimer = new Timer();
+	private Timer ghostMoveTimer = new Timer();
+	private Timer cherryFruitTimer = new Timer();
+
 
 	Thread gameLoopThread = null;
 
@@ -78,133 +90,159 @@ public class Game {
 
 		Game game;
 
+		NormalGhostBehavior normalGhostBehavior = new NormalGhostBehavior();
+		FleeingGhostBehavior fleeingGhostBehavior = new FleeingGhostBehavior();
+		RespawnGhostBehavior respawnGhostBehavior = new RespawnGhostBehavior();
+
+		GhostCharacter Blinky = CharacterFactory.CreateGhost(GhostType.Blinky, 11, 10);
+		GhostCharacter Inky = CharacterFactory.CreateGhost(GhostType.Inky, 12, 10);
+		GhostCharacter Clyde = CharacterFactory.CreateGhost(GhostType.Clyde, 14, 10);
+		GhostCharacter Pinky = CharacterFactory.CreateGhost(GhostType.Pinky, 15, 10);
+
 		public gameLoop(Game game) {
 			this.game = game;
 		}
 
-		public void run() {
-
-			NormalGhostBehavior normalGhostBehavior = new NormalGhostBehavior();
-			FleeingGhostBehavior fleeingGhostBehavior = new FleeingGhostBehavior();
-			RespawnGhostBehavior respawnGhostBehavior = new RespawnGhostBehavior();
-
-			GhostCharacter Blinky = CharacterFactory.CreateGhost(GhostType.Blinky, 11, 10);
-			GhostCharacter Inky = CharacterFactory.CreateGhost(GhostType.Inky, 12, 10);
-			GhostCharacter Clyde = CharacterFactory.CreateGhost(GhostType.Clyde, 14, 10);
-			GhostCharacter Pinky = CharacterFactory.CreateGhost(GhostType.Pinky, 15, 10);
-
-			/*
-			 * Movement.TurnRight(course, Blinky); Movement.TurnUp(course, Blinky);
-			 * Movement.TurnUp(course, Inky); Movement.TurnLeft(course, Clyde);
-			 * Movement.TurnLeft(course, Clyde); Movement.TurnUp(course, Clyde);
-			 * Movement.TurnUp(course, Clyde); Movement.TurnUp(course, Blinky);
-			 * Movement.TurnUp(course, Inky); Movement.TurnRight(course, Clyde);
-			 * Movement.TurnRight(course, Clyde); Movement.TurnRight(course, Inky);
-			 * Movement.TurnRight(course, Blinky); Movement.TurnRight(course, Blinky);
-			 * 
-			 * try { Thread.sleep(1000); } catch (InterruptedException e1) { // TODO
-			 * Auto-generated catch block e1.printStackTrace(); } graphics.repaint(); try {
-			 * Thread.sleep(1000000000); } catch (InterruptedException e1) { // TODO
-			 * Auto-generated catch block e1.printStackTrace(); }
-			 */
-
-			GhostCharacter[] ghosts = { Blinky, Inky, Clyde, Pinky };
-			// GhostCharacter[] ghosts = {Blinky};
-
-			// course.PlaceObjectOnCourseBlock(player);
-
-			new Timer().scheduleAtFixedRate(new TimerTask() {
-				public void run() {
-					if (CherryFruit.Spawnable)
-						while (course
-								.PlaceObjectOnCourseBlock(FruitFactory.CreateCherry((int) ((Math.random() * 100) % 27),
-										(int) ((Math.random() * 100) % 22))) != Status.NO_COLLISION) {
-						}
-
-				}
-			}, 3000, 3000);
-
-			Movement.NoTurn(course, player);
-
-			while (player.HasLivesLeft()) {
-				if (player.ResetIfLiveLost() == true) {
-					for (GhostCharacter ghost : ghosts) {
-						ghost.InstantRespawn();
-						Movement.NoTurn(course, ghost);
-					}
-					try {
-						Thread.sleep(2000);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-
-				if(pause != true) {
-					try {
-						Thread.sleep(110);
-					} catch (InterruptedException e) {
+		private void ghostMove(GhostCharacter ghost){
+			if (player.HasLivesLeft() && !stop) {
+				if (pause != true) {
+					if (ghost.IsRespawning()) {
+						ghost.SetBehaviorStrategy(respawnGhostBehavior);
+					} else if (player.HasSuperPower()) {
+						ghost.SetBehaviorStrategy(fleeingGhostBehavior);
+					} else {
+						ghost.SetBehaviorStrategy(normalGhostBehavior);
 					}
 
-					player.SetCurrentDirection(playerDirection);;
+					ghost.SetNextDirection(game);
 
-					switch (playerDirection) {
+					switch (ghost.GetCurrentDirection()) {
 						case LEFT:
-								Movement.TurnLeft(course, player);
-								break;
+							Movement.TurnLeft(course, ghost);
+							break;
 						case RIGHT:
-								Movement.TurnRight(course, player);
-								break;
+							Movement.TurnRight(course, ghost);
+							break;
 						case UP:
-								Movement.TurnUp(course, player);
-								break;
+							Movement.TurnUp(course, ghost);
+							break;
 						case DOWN:
-								Movement.TurnDown(course, player);
-								break;
-						default:
+							Movement.TurnDown(course, ghost);
+							break;
+						case NONE:
+							Movement.NoTurn(course, ghost);
 							break;
 					}
-					
-					for(GhostCharacter ghost : ghosts) {
-						if(ghost.IsRespawning()){
-							ghost.SetBehaviorStrategy(respawnGhostBehavior);
-						}
-						else if(player.HasSuperPower() && ghost.isOutOfSpawnArea()) {
-							ghost.SetBehaviorStrategy(fleeingGhostBehavior);
-						}
-						else{
-							ghost.SetBehaviorStrategy(normalGhostBehavior);
-						}
+				}
+			}
+		}
 
-						ghost.SetNextDirection(game);
+		public void run() {
+			player.SetCurrentDirection(Direction.NONE);
 
-						switch (ghost.GetCurrentDirection()) {
-							case LEFT:
-									Movement.TurnLeft(course, ghost);
-									break;
-							case RIGHT:
-									Movement.TurnRight(course, ghost);
-									break;
-							case UP:
-									Movement.TurnUp(course, ghost);
-									break;
-							case DOWN:
-									Movement.TurnDown(course, ghost);
-									break;
-							case NONE:
+			GhostCharacter[] ghosts = { Blinky, Inky, Clyde, Pinky };
+
+			TimerTask graphicsRepaintTimerTask = new TimerTask() {
+				public void run() {
+						graphics.repaint();
+				}
+			};
+
+			TimerTask playerMoveTimerTask = new TimerTask(){
+				public void run() {
+					if (player.HasLivesLeft() && !stop) {
+							if (player.ResetIfLiveLost() == true) {
+								for (GhostCharacter ghost : ghosts) {
+									course.PlaceObjectOnCourseBlock(ghost.GetOverlayedBlockObject());
+									ghost.InstantRespawn();
 									Movement.NoTurn(course, ghost);
-									break;
-							default:
-								break;
+								}
+								player.SetCurrentDirection(Direction.NONE);
+								Movement.NoTurn(course, player);
+								stop = true;
+								try {
+									Thread.sleep(2000);
+									stop = false;
+								} catch (InterruptedException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+							}
+
+							if (pause != true) {
+								player.SetCurrentDirection(playerDirection);
+
+								switch (playerDirection) {
+									case LEFT:
+										Movement.TurnLeft(course, player);
+										break;
+									case RIGHT:
+										Movement.TurnRight(course, player);
+										break;
+									case UP:
+										Movement.TurnUp(course, player);
+										break;
+									case DOWN:
+										Movement.TurnDown(course, player);
+										break;
+									default:
+										Movement.NoTurn(course, player);
+										break;
+							}
 						}
 					}
 				}
-				graphics.repaint();
-			}
+			};
+
+
+			TimerTask ghostMoveTimerTask = new TimerTask(){
+				public void run() {
+					for (GhostCharacter gh : ghosts) {
+						ghostMove(gh);
+					}
+				}
+			};
+
+			TimerTask cherryFruitTimerTask = new TimerTask(){
+				public void run() {
+					if (CherryFruit.Spawnable) {
+						Integer xPos = ((int) (Math.random() * 100) % 27);
+						Integer yPos = ((int) (Math.random() * 100) % 22);
+
+						while ((course.GetBlockFromCourse(xPos, yPos).BlockObject.getClass() != SuperPower.class)
+								&& (course.IsInSpawnArea(xPos, yPos) == false) && (course.PlaceObjectOnCourseBlock(
+										FruitFactory.CreateCherry(xPos, yPos)) != Status.NO_COLLISION)) {
+							xPos = (Integer) ((int) (Math.random() * 100) % 27);
+							yPos = (Integer) ((int) (Math.random() * 100) % 22);
+						}
+					}
+
+				}
+			};
+
+			graphicsRepaintTimer.schedule(graphicsRepaintTimerTask, 0, 60);
+			playerMoveTimer.schedule(playerMoveTimerTask, 0, 100);
+			ghostMoveTimer.schedule(ghostMoveTimerTask, 0, 120);
+			cherryFruitTimer.schedule(cherryFruitTimerTask, 0, 3000);
 		}
 	}
 
-	Game(){
+	public void ResetInstance() {
+		graphics.dispose();
+		graphicsRepaintTimer.cancel(); graphicsRepaintTimer = new Timer();
+		playerMoveTimer.cancel(); playerMoveTimer = new Timer();
+		ghostMoveTimer.cancel(); ghostMoveTimer = new Timer();
+		cherryFruitTimer.cancel(); cherryFruitTimer = new Timer();
+		player.SetCurrentDirection(Direction.NONE);
+		Stop();
+		InitInstance();
+		try {
+			Start();
+		} catch (Exception e) {}
+		LaunchGraphics();
+	}
+
+	public void InitInstance(){
 		pause = true;
 		stop = true;
 

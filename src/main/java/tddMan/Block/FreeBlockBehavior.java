@@ -2,7 +2,7 @@ package tddMan.Block;
 
 import java.util.HashMap;
 
-import tddMan.SuperPower;
+import tddMan.SuperPower.SuperPower;
 import tddMan.Character.GameCharacter;
 import tddMan.Character.GhostCharacter;
 import tddMan.Character.PlayerCharacter;

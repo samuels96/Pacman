@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.awt.TextField;
 import java.awt.event.KeyEvent;
@@ -13,9 +12,10 @@ import java.awt.event.KeyListener;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 
-import tddMan.Course;
 import tddMan.Game;
+import tddMan.Course.Course;
 import tddMan.Block.Block;
+import tddMan.Block.BlockGraphicsResources;
 import tddMan.Block.BlockInteractiveInterface;
 import tddMan.Character.GhostCharacter;
 import tddMan.Movement.Direction;
@@ -26,6 +26,8 @@ class MyCanvas extends JComponent {
 	private Course course;
 	private Block[] courseBlocks;
 
+	private Boolean ghostFrameFlag = false;
+
 	public MyCanvas(Game game) {
 		this.game = game;
 		this.course = game.GetCourse();
@@ -35,6 +37,11 @@ class MyCanvas extends JComponent {
 	public void DrawBlock(Graphics g, BlockInteractiveInterface blockObj) {
 		Graphics2D g2d = (Graphics2D) g;
 
+		if(!ghostFrameFlag)
+			ghostFrameFlag = true;
+		else 
+			ghostFrameFlag = false;
+
 		if (blockObj.getClass().equals(GhostCharacter.class)) {
 			int offset = 0;
 
@@ -43,16 +50,16 @@ class MyCanvas extends JComponent {
 				GhostCharacter gh = ghostStackIterator.next();
 				switch(gh.GetCurrentDirection()){
 					case RIGHT:
-						g2d.drawImage(gh.GraphicsGetImg(), (gh.GetXPos() * 32) - offset, gh.GetYPos() * 32, null);
+						g2d.drawImage(gh.GraphicsGetImg(), (gh.GetXPos() * 32) - (ghostFrameFlag ? offset : offset+6), gh.GetYPos() * 32, null);
 						break;
 					case LEFT:
-						g2d.drawImage(gh.GraphicsGetImg(), (gh.GetXPos() * 32) + offset, gh.GetYPos() * 32, null);
+						g2d.drawImage(gh.GraphicsGetImg(), (gh.GetXPos() * 32) + (ghostFrameFlag ? offset : offset-6), gh.GetYPos() * 32, null);
 						break;
 					case UP:
-						g2d.drawImage(gh.GraphicsGetImg(), gh.GetXPos() * 32, (gh.GetYPos() * 32) + offset, null);
+						g2d.drawImage(gh.GraphicsGetImg(), gh.GetXPos() * 32, (gh.GetYPos() * 32) + (ghostFrameFlag ? offset : offset-6), null);
 						break;
 					case DOWN:
-						g2d.drawImage(gh.GraphicsGetImg(), gh.GetXPos() * 32, (gh.GetYPos() * 32) - offset, null);
+						g2d.drawImage(gh.GraphicsGetImg(), gh.GetXPos() * 32, (gh.GetYPos() * 32) - (ghostFrameFlag ? offset : offset+6), null);
 						break;
 					case NONE:
 						g2d.drawImage(gh.GraphicsGetImg(), offset + gh.GetXPos() * 32, offset + (gh.GetYPos() * 32), null);
@@ -66,6 +73,7 @@ class MyCanvas extends JComponent {
 	}
     
 
+
 	public void paint(Graphics g) {
 		Graphics2D g2d = (Graphics2D) g;
 
@@ -78,7 +86,20 @@ class MyCanvas extends JComponent {
 
 		g.setFont(new Font("TimesRoman", Font.PLAIN, 25)); 
 		g.setColor(Color.WHITE);
-		g.drawString("Score: " + game.GetPoints(), 0, 25);
+		g.drawString("Score: " + game.GetPoints(), 0, 730);
+
+		g.drawString("Lives: ", 200, 730);
+		for(int i = 1; i <= game.GetPlayer().GetLives(); i++){
+			g.drawImage(BlockGraphicsResources.imgDict_pac.get(Direction.RIGHT).get(1), 232 + (i * 40), 705, null);
+		}
+		if(game.GetPlayer().GetLives() == 0){
+			g.setFont(new Font("TimesRoman", Font.BOLD, 60)); 
+			g.drawString("GAME OVER", 250, 360);
+
+			g.setFont(new Font("TimesRoman", Font.PLAIN, 20)); 
+			g.drawString("Press Enter To Play Again", 320, 438);
+		}
+
 	}
 }
 
@@ -113,6 +134,10 @@ class CustomKeyListener implements KeyListener{
 				else
 					game.Pause();
 				break;
+			case KeyEvent.VK_ENTER:
+				if(!game.GetPlayer().HasLivesLeft()){
+					game.ResetInstance();
+				}
 		}
 
 	}
@@ -137,7 +162,7 @@ public class GameGraphics extends JFrame {
 		add(textField);
 		add(mc);
 
-		setSize(1000, 800);
+		setSize(880, 780);
 		setLocationRelativeTo(null);
         setVisible(true);  
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

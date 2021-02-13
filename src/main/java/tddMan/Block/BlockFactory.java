@@ -7,7 +7,7 @@ import java.util.HashMap;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 
-import tddMan.SuperPower;
+import tddMan.SuperPower.SuperPower;
 import tddMan.Block.Block.BlockType;
 import tddMan.Fruit.FruitFactory;
 

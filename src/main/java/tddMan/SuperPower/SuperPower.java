@@ -1,4 +1,4 @@
-package tddMan;
+package tddMan.SuperPower;
 
 import java.awt.image.BufferedImage;
 

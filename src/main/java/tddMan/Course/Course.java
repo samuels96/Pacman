@@ -1,4 +1,4 @@
-package tddMan;
+package tddMan.Course;
 
 import tddMan.Block.Block;
 import tddMan.Block.BlockFactory;
@@ -19,7 +19,7 @@ public class Course {
 			,"x┬┬┬╖.╔════╡ ╨ ╞════╗.╓┬┬┬x" //7
 			,"x■■■→.║             ║.←■■■x" //8
 			,"┴┴┴┴╜.╨ ╔══╡   ╞══╗ ╨.╙┴┴┴┴" //9
-			,"<    .  ║         ║  .    >" //10
+			,"<    .  ║■■     ■■║  .    >" //10
 			,"┬┬┬┬╖.╥ ╚═════════╝ ╥.╓┬┬┬┬" //11
 			,"x■■■→.║             ║.←■■■x" //12
 			,"x┴┴┴╜.╨ ╞════╦════╡ ╨.╙┴┴┴x" //13
@@ -63,6 +63,11 @@ public class Course {
 		InitCourse();
 	}
 
+	public Boolean IsInSpawnArea(Integer xPos, Integer yPos){
+		if((yPos == 9 || yPos == 10) && (xPos >= 8 && xPos <= 18))
+			return true;
+		return false;
+	}
 
 	public Block GetBlockFromCourse(Integer xPos, Integer yPos) {
 		return course[yPos][xPos];
